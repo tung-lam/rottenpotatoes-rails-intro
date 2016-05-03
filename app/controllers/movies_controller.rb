@@ -11,11 +11,29 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @all_ratings = Movie::RATINGS
-    if params[:ratings].blank?
-      params[:ratings] = {"G"=>"1", "PG"=>"1", "PG-13"=>"1", "R"=>"1"}
+    @sort = params[:sort] || session[:sort]
+
+    @all_ratings = Movie.all_ratings
+    @checked_ratings = params[:ratings] || session[:ratings] || {}
+
+
+    if @checked_ratings.blank?
+      @checked_ratings = Hash[@all_ratings.map {|rating| [rating, '1']}] # {"G"=>"1", "PG"=>"1", "PG-13"=>"1", "R"=>"1"}
     end
-    @movies = Movie.where(rating: params[:ratings].keys).order(params[:sort])
+
+    if params[:sort] != session[:sort] or params[:ratings] != session[:ratings]
+      session[:sort] = @sort
+      session[:ratings] = @checked_ratings
+      redirect_to sort: @sort, ratings: @checked_ratings and return
+    end
+
+    @movies = Movie.where(rating: @checked_ratings.keys).order(@sort)
+
+    # @all_ratings = Movie::RATINGS
+    # if params[:ratings].blank?
+    #   params[:ratings] = {"G"=>"1", "PG"=>"1", "PG-13"=>"1", "R"=>"1"}
+    # end
+    # @movies = Movie.where(rating: params[:ratings].keys).order(params[:sort])
   end
 
   def new
